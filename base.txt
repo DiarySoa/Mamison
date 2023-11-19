@@ -1,0 +1,130 @@
+create database stock;
+\c stock
+
+create table magasin(
+    id SERIAL PRIMARY KEY,
+    nom VARCHAR(50)
+);
+
+insert into magasin values(default, 'M1');
+insert into magasin values(default, 'M2');
+insert into magasin values(default, 'M3');
+
+
+create table type_stock(
+    id SERIAL PRIMARY KEY,
+    nom VARCHAR(50)
+);
+
+insert into type_stock values(default, 'FIFO');
+insert into type_stock values(default, 'LIFO');
+
+create table article(
+    id SERIAL PRIMARY KEY,
+    code VARCHAR(50) UNIQUE,
+    nom VARCHAR (50),
+    id_type int,
+    FOREIGN KEY(id_type) REFERENCES type_stock(id)
+
+);
+
+insert into article values (default, 'VAR', 'vary');
+insert into article values (default, 'PAT', 'paty');
+insert into article values (default, 'SIM', 'siramamy');
+insert into article values (default, 'SIR', 'sira');
+
+create table categorie_article(
+    id SERIAL PRIMARY KEY,
+    code VARCHAR(50) UNIQUE,
+    nom VARCHAR(50),
+    id_type int,
+    FOREIGN KEY(id_type) REFERENCES type_stock(id)
+);
+
+insert into categorie_article values (default, 'VAR001', 'vary mena',1);
+insert into categorie_article values (default, 'VAR002', 'vary fotsy',1);
+insert into categorie_article values (default, 'PAT001', 'nouille',2);
+insert into categorie_article values (default, 'PAT002', 'spaghetti',2);
+insert into categorie_article values (default, 'PAT003', 'macaroni',2);
+insert into categorie_article values (default, 'SIM001', 'siramamy fotsy',1);
+insert into categorie_article values (default, 'SIM002', 'siramamy mavokely',1);
+
+create table unite(
+    id SERIAL PRIMARY KEY,
+    nom VARCHAR(50)
+);
+
+insert into unite values(default,'kg');
+insert into unite values(default,'tonne');
+insert into unite values(default,'paquet');
+insert into unite values(default,'boite');
+
+create view tous_sur_article as(SELECT ca.id,ca.code,ca.nom, ts.nom as nom_type FROM type_stock ts JOIN categorie_article ca ON ca.id_type = ts.id);
+
+create table article_prix(
+    id SERIAL PRIMARY KEY,
+    id_categ_art int,
+    prix_unitaire DOUBLE PRECISION,
+    id_unite int,
+    date_prix DATE,
+    FOREIGN KEY(id_categ_art) REFERENCES categorie_article(id),
+    FOREIGN KEY(id_unite) REFERENCES unite(id)
+);
+
+insert into article_prix values(default,1, 15000.0,1,'2023-10-18');
+insert into article_prix values(default,1, 16000.0,1,'2023-10-30');
+insert into article_prix values(default,1, 14000.0,1,'2023-11-01');
+insert into article_prix values(default,2, 15000.0,1,'2023-10-01');
+insert into article_prix values(default,2, 15500.0,1,'2023-11-01');
+insert into article_prix values(default,3, 8000.0,3,'2023-10-28');
+insert into article_prix values(default,3, 8200.0,3,'2023-10-30');
+insert into article_prix values(default,3, 9000.0,3,'2023-11-02');
+
+
+create table type_mouvement(
+    id SERIAL PRIMARY KEY,
+    nom VARCHAR(50)
+);
+
+insert into type_mouvement values(default, 'entree');
+insert into type_mouvement values(default, 'sortie');
+
+create table entree(
+    id SERIAL PRIMARY KEY,
+    id_categ_art int,
+    quantite DOUBLE PRECISION,
+    id_unite int,
+    date_entree DATE,
+    id_magasin int,
+    FOREIGN KEY(id_categ_art) REFERENCES categorie_article(id),
+    FOREIGN KEY(id_unite) REFERENCES unite(id),
+    FOREIGN KEY(id_magasin) REFERENCES magasin(id)
+);
+
+create table sortie(
+    id SERIAL PRIMARY KEY,
+    id_categ_art int,
+    quantite DOUBLE PRECISION,
+    id_unite int,
+    date_sortie DATE,
+    id_magasin int,
+    FOREIGN KEY(id_categ_art) REFERENCES categorie_article(id),
+    FOREIGN KEY(id_unite) REFERENCES unite(id),
+    FOREIGN KEY(id_magasin) REFERENCES magasin(id)
+);
+
+create table mouvement(
+    id SERIAL PRIMARY KEY,
+    id_categ_art int,
+    quantite DOUBLE PRECISION,
+    id_unite int,
+    date DATE,
+    id_magasin int,
+    id_type_mouvement int,
+    FOREIGN KEY(id_categ_art) REFERENCES categorie_article(id),
+    FOREIGN KEY(id_unite) REFERENCES unite(id),
+    FOREIGN KEY(id_magasin) REFERENCES magasin(id),
+    FOREIGN KEY(id_type_mouvement) REFERENCES type_mouvement(id)
+);
+
+create view liste_mouvement as (select mv.id,ca.code,mv.quantite,u.nom as unite,tm.nom as type,mv.date,mag.nom as magasin, ca.nom_type from mouvement mv JOIN tous_sur_article ca ON mv.id_categ_art = ca.id JOIN unite u ON mv.id_unite = u.id JOIN magasin mag ON mv.id_magasin = mag.id JOIN type_mouvement tm ON mv.id_type_mouvement = tm.id);
